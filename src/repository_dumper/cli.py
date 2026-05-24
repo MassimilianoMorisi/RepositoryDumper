@@ -52,6 +52,6 @@ def main() -> None:
     if (not output_file):
         output_file = os.path.join(args.root_dir, DEFAULT__OUTPUT_FILENAME)
 
-    project_source_explorer: ProjectSourceExporter = ProjectSourceExporter(args.root_dir, args.output_file)
+    project_source_explorer: ProjectSourceExporter = ProjectSourceExporter(args.root_dir, output_file)
     
     project_source_explorer.run(args.allowed_extensions)
