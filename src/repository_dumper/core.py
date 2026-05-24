@@ -7,7 +7,7 @@ from typing import List, Optional, Protocol, Sequence, Union
 from pathlib import Path
 import os
 
-DEFAULT_ENCODING: str = "utf-8"
+DEFAULT__ENCODING: str = "utf-8"
 
 class FileValidator(Protocol):
 
@@ -103,7 +103,7 @@ class ExportWriter:
             return None
         
         try:
-            content: str = Path(filepath).read_text(encoding = DEFAULT_ENCODING)
+            content: str = Path(filepath).read_text(encoding = DEFAULT__ENCODING)
 
         except Exception:
             return None
@@ -125,7 +125,7 @@ class ExportWriter:
         if (not formatted_content):
             return
         
-        with open(output_file, "at", encoding = DEFAULT_ENCODING) as file:
+        with open(output_file, "at", encoding = DEFAULT__ENCODING) as file:
             file.write(formatted_content)
     
     
@@ -151,6 +151,6 @@ class ProjectSourceExporter:
     def run(self, allowed_extensions: Optional[List[str]]) -> None:
         self.__allowed_extensions = allowed_extensions
 
-        open(self.__output_file, "w", encoding = DEFAULT_ENCODING).close()
+        open(self.__output_file, "w", encoding = DEFAULT__ENCODING).close()
 
         self.__directory_walker.walk(self.__handle_node)
