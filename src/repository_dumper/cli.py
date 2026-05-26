@@ -17,7 +17,7 @@ def main() -> None:
 
     args_parser.add_argument(
         "-r",
-        "-root_dir",
+        "--root_dir",
         dest = "root_dir",
         action = "store",
         type = str,
