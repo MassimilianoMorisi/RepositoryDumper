@@ -1,4 +1,3 @@
-
 # RepositoryDumper
 
 CLI tool to export a code repository into a single structured text snapshot.
@@ -10,7 +9,8 @@ It recursively scans a project directory and writes all source files into one ou
 ## Features
 
 - Recursive directory traversal
-- File filtering by extension
+- File filtering by allowed extensions
+- Exclusion of specific extensions, files, and folders
 - Structured snapshot output format
 - Lightweight CLI tool (no dependencies)
 - Stable formatting for programmatic parsing and LLM usage
@@ -22,14 +22,16 @@ It recursively scans a project directory and writes all source files into one ou
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/RepositoryDumper.git
+git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
 cd RepositoryDumper
-````
+
+```
 
 Install in editable mode:
 
 ```bash
 pip install -e .
+
 ```
 
 ---
@@ -40,18 +42,28 @@ Basic usage:
 
 ```bash
 repo-dump -r .
+
 ```
 
 Specify output file:
 
 ```bash
 repo-dump -r . -o snapshot.txt
+
 ```
 
-Filter by file extension:
+Filter by allowed file extensions:
 
 ```bash
 repo-dump -r . -e .py .js .ts
+
+```
+
+Exclude specific extensions, folders, and files:
+
+```bash
+repo-dump -r . --exclude_extensions .pyc .md --exclude_folders .git node_modules --exclude_files secrets.json
+
 ```
 
 ---
@@ -69,6 +81,7 @@ path/to/file.py
 
 <file content>
 --------------------------------------------------------------------------------
+
 ```
 
 * The outer dashed line separates files
@@ -95,4 +108,3 @@ path/to/file.py
 * Output is appended in a structured sequential format
 
 ---
-
