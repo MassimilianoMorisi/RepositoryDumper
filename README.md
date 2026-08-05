@@ -22,7 +22,7 @@ It recursively scans a project directory and writes all source files into one ou
 Clone the repository:
 
 ```bash
-git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+git clone https://github.com/MassimilianoMorisi/RepositoryDumper.git
 cd RepositoryDumper
 
 ```
