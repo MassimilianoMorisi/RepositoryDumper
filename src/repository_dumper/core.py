@@ -11,8 +11,14 @@ DEFAULT__ENCODING: str = "utf-8"
 
 class FileValidator(Protocol):
 
-    def __call__(self, path) -> bool:
+    def __call__(self, path: str) -> bool:
         ...
+
+class DirValidator(Protocol):
+
+    def __call__(self, path: str) -> bool:
+        ...
+
 
 @dataclass
 class DirectoryNode:
@@ -30,10 +36,11 @@ class NodeVisitor(Protocol):
 
 class DirectoryWalker:
 
-    def __init__(self, root_dir: str, is_file_valid: Optional[FileValidator]) -> None:
+    def __init__(self, root_dir: str, is_file_valid: Optional[FileValidator], is_dir_valid: Optional[DirValidator] = None) -> None:
         self.__root_dir: str = root_dir
         self.__root_node: Union[DirectoryNode, None] = None
         self.__is_file_valid: FileValidator = is_file_valid or (lambda path: True)
+        self.__is_dir_valid: DirValidator = is_dir_valid or (lambda path: True)
         self.__node_visitor: NodeVisitor = lambda node: None
 
     def __get_directory_tree_recursively(self, path: str) -> Union[DirectoryNode, None]:
@@ -43,6 +50,9 @@ class DirectoryWalker:
             if (self.__is_file_valid(path)):
                 return DirectoryNode(os.path.basename(path), path, is_file)
         
+            return None
+
+        if (not self.__is_dir_valid(path)):
             return None
 
         directory_name: str = os.path.basename(path)
@@ -135,10 +145,30 @@ class ProjectSourceExporter:
         self.__root_dir: str = root_dir
         self.__output_file: str = output_file
         self.__allowed_extensions: Union[List[str], None] = None
+        self.__exclude_extensions: Union[List[str], None] = None
+        self.__exclude_files: Union[List[str], None] = None
+        self.__exclude_folders: Union[List[str], None] = None
 
-        self.__directory_walker: DirectoryWalker = DirectoryWalker(self.__root_dir, self.__is_file_valid)
+        self.__directory_walker: DirectoryWalker = DirectoryWalker(self.__root_dir, self.__is_file_valid, self.__is_dir_valid)
+
+    def __is_dir_valid(self, path: str) -> bool:
+        if (path == self.__root_dir):
+            return True
+
+        if (not self.__exclude_folders):
+            return True
+            
+        return os.path.basename(path) not in self.__exclude_folders
 
     def __is_file_valid(self, path: str) -> bool:
+        file_name: str = os.path.basename(path)
+
+        if (self.__exclude_files and file_name in self.__exclude_files):
+            return False
+
+        if (self.__exclude_extensions and any(path.endswith(ext) for ext in self.__exclude_extensions)):
+            return False
+
         if (not self.__allowed_extensions):
             return True
 
@@ -148,8 +178,16 @@ class ProjectSourceExporter:
         if (node.is_file):
             ExportWriter.append_formatted_data_to_file(self.__output_file, self.__root_dir, node.path)
 
-    def run(self, allowed_extensions: Optional[List[str]]) -> None:
+    def run(self, 
+            allowed_extensions: Optional[List[str]] = None,
+            exclude_extensions: Optional[List[str]] = None,
+            exclude_files: Optional[List[str]] = None,
+            exclude_folders: Optional[List[str]] = None) -> None:
+            
         self.__allowed_extensions = allowed_extensions
+        self.__exclude_extensions = exclude_extensions
+        self.__exclude_files = exclude_files
+        self.__exclude_folders = exclude_folders
 
         open(self.__output_file, "w", encoding = DEFAULT__ENCODING).close()
 
