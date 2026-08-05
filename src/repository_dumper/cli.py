@@ -1,4 +1,3 @@
-
 from typing import Union
 
 import argparse
@@ -46,6 +45,36 @@ def main() -> None:
         help = "Allowed file extension (e.g. .py, .java, ...)"
     )
 
+    args_parser.add_argument(
+        "--exclude_extensions",
+        dest = "exclude_extensions",
+        action = "store",
+        type = str,
+        nargs = "+",
+        required = False,
+        help = "File extensions to exclude (e.g. .pyc, .md)"
+    )
+
+    args_parser.add_argument(
+        "--exclude_files",
+        dest = "exclude_files",
+        action = "store",
+        type = str,
+        nargs = "+",
+        required = False,
+        help = "Specific file names to exclude (e.g. secrets.json)"
+    )
+
+    args_parser.add_argument(
+        "--exclude_folders",
+        dest = "exclude_folders",
+        action = "store",
+        type = str,
+        nargs = "+",
+        required = False,
+        help = "Specific folder names to exclude (e.g. .git, node_modules)"
+    )
+
     args: argparse.Namespace = args_parser.parse_args()
 
     output_file: Union[str, None] = args.output_file
@@ -54,4 +83,9 @@ def main() -> None:
 
     project_source_explorer: ProjectSourceExporter = ProjectSourceExporter(args.root_dir, output_file)
     
-    project_source_explorer.run(args.allowed_extensions)
+    project_source_explorer.run(
+        allowed_extensions = args.allowed_extensions,
+        exclude_extensions = args.exclude_extensions,
+        exclude_files = args.exclude_files,
+        exclude_folders = args.exclude_folders
+    )
