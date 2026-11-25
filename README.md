@@ -59,21 +59,21 @@ It recursively scans a project directory and writes all source files into one ou
 2. Install `repo-dump` directly from GitHub:
 
    ```bash
-   pipx install git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+   pipx install git+https://github.com/MassimilianoMorisi/RepositoryDumper.git
    ```
 
 ### Option 2: Install with `uv`
 
-If you use [uv](https://docs.astral.sh/uv/) (which can also manage Python 3.10+ automatically):
+If you use `uv` (which can also manage Python 3.10+ automatically):
 
 ```bash
-uv tool install git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+uv tool install git+https://github.com/MassimilianoMorisi/RepositoryDumper.git
 ```
 
 Or run `repo-dump` once without installing it permanently:
 
 ```bash
-uvx --from git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git) repo-dump
+uvx --from git+https://github.com/MassimilianoMorisi/RepositoryDumper.git repo-dump
 ```
 
 ### Verify Installation
@@ -88,7 +88,7 @@ repo-dump --help
 
 * **With `pipx`:**
   ```bash
-  pipx install --force git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+  pipx install --force git+https://github.com/MassimilianoMorisi/RepositoryDumper.git
   ```
 * **With `uv`:**
   ```bash
@@ -192,7 +192,7 @@ path/to/file.py
 To contribute or run the test suite locally, clone the repository into an isolated virtual environment:
 
 ```bash
-git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+git clone https://github.com/MassimilianoMorisi/RepositoryDumper.git
 cd RepositoryDumper
 python -m venv .venv
 ```
