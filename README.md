@@ -37,40 +37,46 @@ pip install -e .
 
 ## Usage
 
-Basic usage (writes to `<root_dir>/repo_dump.txt` by default):
+Basic usage (scans the current working directory and writes to `./repo_dump.txt` by default):
 
 ```bash
-repo-dump -r .
+repo-dump
+```
+
+Specify a target root directory:
+
+```bash
+repo-dump -r path/to/project
 ```
 
 Specify output file:
 
 ```bash
-repo-dump -r . -o snapshot.txt
+repo-dump -o snapshot.txt
 ```
 
 Filter by allowed file extensions:
 
 ```bash
-repo-dump -r . -e py js ts
+repo-dump -e py js ts
 ```
 
 Exclude specific extensions, folders, and files:
 
 ```bash
-repo-dump -r . --exclude-extensions pyc md --exclude-folders .git node_modules --exclude-files secrets.json
+repo-dump --exclude-extensions pyc md --exclude-folders .git node_modules --exclude-files secrets.json
 ```
 
 Exclude paths using a `.gitignore` file (automatically excludes `.git/` as well):
 
 ```bash
-repo-dump -r . --exclude-from-file .gitignore
+repo-dump --exclude-from-file .gitignore
 ```
 
 Exclude paths using a custom ignore file combined with extension filters:
 
 ```bash
-repo-dump -r . -e py toml --exclude-from-file .dumpignore -o snapshot.txt
+repo-dump -e py toml --exclude-from-file .dumpignore -o snapshot.txt
 ```
 
 ---
@@ -111,6 +117,7 @@ path/to/file.py
 * Files are read using UTF-8 encoding
 * Binary or unreadable files are skipped safely
 * Directory traversal is recursive and deterministic
+* When `-r` / `--root-dir` is omitted, the current working directory (`.`) is scanned by default
 * When `-o` / `--output-file` is omitted, the dump is written to `<root_dir>/repo_dump.txt` and automatically excluded from being dumped into itself
 * Extension filters (`-e` / `--allowed-extensions`, `--exclude-extensions`) are case-insensitive and accept dotless extensions (e.g., `py java`) as well as dot-prefixed ones (e.g., `.py .java`)
 * `.gitignore`-style ignore files support comments (`#`), blank lines, globs, directory patterns, root-anchored paths, and negation (`!`)

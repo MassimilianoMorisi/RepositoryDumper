@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from repository_dumper import DEFAULT_OUTPUT_FILENAME
 from repository_dumper.cli import build_parser, main
 
 
@@ -39,9 +40,9 @@ def test_parse_long_flags() -> None:
 
 def test_parse_short_flags_and_defaults() -> None:
     parser = build_parser()
-    args = parser.parse_args(["-r", ".", "-o", "dump.txt", "-e", "py", "ts"])
+    args = parser.parse_args(["-r", "src", "-o", "dump.txt", "-e", "py", "ts"])
 
-    assert args.root_dir == "."
+    assert args.root_dir == "src"
     assert args.output_file == "dump.txt"
     assert args.allowed_extensions == ["py", "ts"]
     assert args.exclude_extensions is None
@@ -50,10 +51,32 @@ def test_parse_short_flags_and_defaults() -> None:
     assert args.exclude_from_file is None
 
 
-def test_missing_required_root_dir_exits() -> None:
+def test_parse_defaults_when_no_args_provided() -> None:
     parser = build_parser()
-    with pytest.raises(SystemExit):
-        parser.parse_args([])
+    args = parser.parse_args([])
+
+    assert args.root_dir == "."
+    assert args.output_file is None
+    assert args.allowed_extensions is None
+    assert args.exclude_extensions is None
+    assert args.exclude_files is None
+    assert args.exclude_folders is None
+    assert args.exclude_from_file is None
+
+
+def test_main_defaults_to_current_working_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "app.py").write_text("print('cwd')\n", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+
+    main([])
+
+    output_file = tmp_path / DEFAULT_OUTPUT_FILENAME
+    assert output_file.exists()
+    result = output_file.read_text(encoding="utf-8")
+    assert "print('cwd')" in result
+    assert DEFAULT_OUTPUT_FILENAME not in result
 
 
 def test_main_runs_with_all_flags(tmp_path: Path) -> None:

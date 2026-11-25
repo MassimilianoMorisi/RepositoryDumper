@@ -20,8 +20,9 @@ def build_parser() -> argparse.ArgumentParser:
         dest="root_dir",
         action="store",
         type=str,
-        required=True,
-        help="Root directory to scan",
+        default=".",
+        required=False,
+        help="Root directory to scan (defaults to the current working directory '.')",
     )
 
     args_parser.add_argument(
