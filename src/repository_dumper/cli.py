@@ -1,13 +1,7 @@
-from typing import Union
-
 import argparse
-import os
 import sys
 
-from repository_dumper.core import ProjectSourceExporter
-
-
-DEFAULT__OUTPUT_FILENAME: str = "exported_source_project.txt"
+from repository_dumper.core import DEFAULT_OUTPUT_FILENAME, ProjectSourceExporter
 
 
 def main() -> None:
@@ -36,7 +30,7 @@ def main() -> None:
         action="store",
         type=str,
         required=False,
-        help="Output file path",
+        help=f"Output file path (defaults to '<root_dir>/{DEFAULT_OUTPUT_FILENAME}')",
     )
 
     args_parser.add_argument(
@@ -94,12 +88,8 @@ def main() -> None:
 
     args: argparse.Namespace = args_parser.parse_args()
 
-    output_file: Union[str, None] = args.output_file
-    if not output_file:
-        output_file = os.path.join(args.root_dir, DEFAULT__OUTPUT_FILENAME)
-
     project_source_exporter: ProjectSourceExporter = ProjectSourceExporter(
-        args.root_dir, output_file
+        args.root_dir, args.output_file
     )
 
     try:

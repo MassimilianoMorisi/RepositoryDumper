@@ -37,7 +37,7 @@ pip install -e .
 
 ## Usage
 
-Basic usage:
+Basic usage (writes to `<root_dir>/repo_dump.txt` by default):
 
 ```bash
 repo-dump -r .
@@ -111,6 +111,7 @@ path/to/file.py
 * Files are read using UTF-8 encoding
 * Binary or unreadable files are skipped safely
 * Directory traversal is recursive and deterministic
+* When `-o` / `--output_file` is omitted, the dump is written to `<root_dir>/repo_dump.txt` and automatically excluded from being dumped into itself
 * Extension filters (`-e`, `--exclude_extensions`) are case-insensitive and accept dotless extensions (e.g., `py java`) as well as dot-prefixed ones (e.g., `.py .java`)
 * `.gitignore`-style ignore files support comments (`#`), blank lines, globs, directory patterns, root-anchored paths, and negation (`!`)
 * Output is appended in a structured sequential format

@@ -2,7 +2,11 @@ from pathlib import Path
 
 import pytest
 
-from repository_dumper import ProjectSourceExporter
+from repository_dumper import (
+    DEFAULT_ENCODING,
+    DEFAULT_OUTPUT_FILENAME,
+    ProjectSourceExporter,
+)
 
 
 def test_exporter_writes_allowed_files(tmp_path: Path) -> None:
@@ -21,6 +25,24 @@ def test_exporter_writes_allowed_files(tmp_path: Path) -> None:
     assert "hello.py" in result
     assert "print('hello')" in result
     assert "notes.md" not in result
+
+
+def test_default_output_filename_and_self_exclusion(tmp_path: Path) -> None:
+    assert DEFAULT_ENCODING == "utf-8"
+    assert DEFAULT_OUTPUT_FILENAME == "repo_dump.txt"
+
+    (tmp_path / "notes.txt").write_text("plain-text-note\n", encoding="utf-8")
+    default_output = tmp_path / DEFAULT_OUTPUT_FILENAME
+    default_output.write_text("stale-previous-dump\n", encoding="utf-8")
+
+    exporter = ProjectSourceExporter(str(tmp_path))
+    exporter.run(allowed_extensions=["txt"])
+
+    assert default_output.exists()
+    result = default_output.read_text(encoding="utf-8")
+    assert "plain-text-note" in result
+    assert "stale-previous-dump" not in result
+    assert DEFAULT_OUTPUT_FILENAME not in result
 
 
 def test_extensions_normalization_and_backward_compatibility(tmp_path: Path) -> None:

@@ -9,7 +9,8 @@ import os
 
 from pathspec import GitIgnoreSpec
 
-DEFAULT__ENCODING: str = "utf-8"
+DEFAULT_ENCODING: str = "utf-8"
+DEFAULT_OUTPUT_FILENAME: str = "repo_dump.txt"
 
 
 class FileValidator(Protocol):
@@ -142,8 +143,8 @@ class DirectoryWalker:
 
 
 class ExportWriter:
-    __OUTER_BORDER: str = "-" * 80
-    __INNER_BORDER: str = "=" * 50
+    _OUTER_BORDER: str = "-" * 80
+    _INNER_BORDER: str = "=" * 50
 
     @classmethod
     def __extract_path_from_root(cls, root_dir_name: str, absolute_path: str) -> str:
@@ -165,19 +166,19 @@ class ExportWriter:
             return None
 
         try:
-            content: str = Path(filepath).read_text(encoding=DEFAULT__ENCODING)
+            content: str = Path(filepath).read_text(encoding=DEFAULT_ENCODING)
         except Exception:
             return None
 
         return (
-            f"{cls.__OUTER_BORDER}\n"
+            f"{cls._OUTER_BORDER}\n"
             f"\n"
-            f"{cls.__INNER_BORDER}\n"
+            f"{cls._INNER_BORDER}\n"
             f"{cls.__extract_path_from_root(root_dir_name, filepath)}\n"
-            f"{cls.__INNER_BORDER}\n"
+            f"{cls._INNER_BORDER}\n"
             f"\n"
             f"{content}\n"
-            f"{cls.__OUTER_BORDER}\n"
+            f"{cls._OUTER_BORDER}\n"
         )
 
     @classmethod
@@ -188,16 +189,18 @@ class ExportWriter:
         if not formatted_content:
             return
 
-        with open(output_file, "at", encoding=DEFAULT__ENCODING) as file:
+        with open(output_file, "at", encoding=DEFAULT_ENCODING) as file:
             file.write(formatted_content)
 
 
 class ProjectSourceExporter:
 
-    def __init__(self, root_dir: str, output_file: str) -> None:
+    def __init__(self, root_dir: str, output_file: Optional[str] = None) -> None:
         self.__root_dir: str = root_dir
-        self.__output_file: str = output_file
-        self.__resolved_output_file: Path = Path(output_file).resolve()
+        self.__output_file: str = output_file or os.path.join(
+            root_dir, DEFAULT_OUTPUT_FILENAME
+        )
+        self.__resolved_output_file: Path = Path(self.__output_file).resolve()
         self.__allowed_extensions: Optional[Set[str]] = None
         self.__exclude_extensions: Optional[Set[str]] = None
         self.__exclude_files: Union[List[str], None] = None
@@ -233,6 +236,12 @@ class ProjectSourceExporter:
         rel_path: str = os.path.relpath(path, self.__root_dir)
         return Path(rel_path).as_posix()
 
+    def __is_output_file(self, path: str) -> bool:
+        try:
+            return os.path.samefile(path, self.__output_file)
+        except OSError:
+            return Path(path).resolve() == self.__resolved_output_file
+
     def __is_dir_valid(self, path: str) -> bool:
         if path == self.__root_dir:
             return True
@@ -248,7 +257,7 @@ class ProjectSourceExporter:
         return True
 
     def __is_file_valid(self, path: str) -> bool:
-        if Path(path).resolve() == self.__resolved_output_file:
+        if self.__is_output_file(path):
             return False
 
         file_name: str = os.path.basename(path)
@@ -299,7 +308,8 @@ class ProjectSourceExporter:
             IgnoreRuleMatcher.from_file(exclude_from_file) if exclude_from_file else None
         )
 
-        open(self.__output_file, "w", encoding=DEFAULT__ENCODING).close()
+        open(self.__output_file, "w", encoding=DEFAULT_ENCODING).close()
+        self.__resolved_output_file = Path(self.__output_file).resolve()
 
         directory_walker: DirectoryWalker = DirectoryWalker(
             self.__root_dir, self.__is_file_valid, self.__is_dir_valid
