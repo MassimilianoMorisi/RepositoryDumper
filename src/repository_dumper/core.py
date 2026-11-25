@@ -3,16 +3,20 @@ RepositoryDumper core engine
 """
 
 from dataclasses import dataclass
-from typing import List, Optional, Protocol, Sequence, Union
 from pathlib import Path
+from typing import List, Optional, Protocol, Sequence, Union
 import os
 
+from pathspec import GitIgnoreSpec
+
 DEFAULT__ENCODING: str = "utf-8"
+
 
 class FileValidator(Protocol):
 
     def __call__(self, path: str) -> bool:
         ...
+
 
 class DirValidator(Protocol):
 
@@ -34,9 +38,59 @@ class NodeVisitor(Protocol):
         ...
 
 
+class IgnoreRuleMatcher:
+    """Loads and evaluates .gitignore-style exclusion patterns."""
+
+    def __init__(self, spec: GitIgnoreSpec, exclude_git_dir: bool = False) -> None:
+        self.__spec: GitIgnoreSpec = spec
+        self.__exclude_git_dir: bool = exclude_git_dir
+
+    @classmethod
+    def from_file(cls, ignore_file: Union[str, Path]) -> "IgnoreRuleMatcher":
+        ignore_path: Path = Path(ignore_file)
+
+        if not ignore_path.exists():
+            raise FileNotFoundError(f"Ignore file not found: '{ignore_path}'")
+
+        if ignore_path.is_dir():
+            raise IsADirectoryError(
+                f"Ignore file path is a directory, expected a file: '{ignore_path}'"
+            )
+
+        try:
+            raw_content: str = ignore_path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ValueError(
+                f"Ignore file '{ignore_path}' could not be decoded as UTF-8: {exc}"
+            ) from exc
+        except OSError as exc:
+            raise OSError(f"Unable to read ignore file '{ignore_path}': {exc}") from exc
+
+        spec: GitIgnoreSpec = GitIgnoreSpec.from_lines(raw_content.splitlines())
+        exclude_git_dir: bool = ignore_path.name == ".gitignore"
+
+        return cls(spec=spec, exclude_git_dir=exclude_git_dir)
+
+    def is_ignored(self, relative_posix_path: str, is_dir: bool = False) -> bool:
+        if not relative_posix_path or relative_posix_path == ".":
+            return False
+
+        if is_dir:
+            if self.__exclude_git_dir and Path(relative_posix_path).name == ".git":
+                return True
+            return self.__spec.match_file(f"{relative_posix_path}/")
+
+        return self.__spec.match_file(relative_posix_path)
+
+
 class DirectoryWalker:
 
-    def __init__(self, root_dir: str, is_file_valid: Optional[FileValidator], is_dir_valid: Optional[DirValidator] = None) -> None:
+    def __init__(
+        self,
+        root_dir: str,
+        is_file_valid: Optional[FileValidator],
+        is_dir_valid: Optional[DirValidator] = None,
+    ) -> None:
         self.__root_dir: str = root_dir
         self.__root_node: Union[DirectoryNode, None] = None
         self.__is_file_valid: FileValidator = is_file_valid or (lambda path: True)
@@ -45,36 +99,35 @@ class DirectoryWalker:
 
     def __get_directory_tree_recursively(self, path: str) -> Union[DirectoryNode, None]:
         is_file: bool = os.path.isfile(path)
-        
-        if (is_file):
-            if (self.__is_file_valid(path)):
+
+        if is_file:
+            if self.__is_file_valid(path):
                 return DirectoryNode(os.path.basename(path), path, is_file)
-        
+
             return None
 
-        if (not self.__is_dir_valid(path)):
+        if not self.__is_dir_valid(path):
             return None
 
         directory_name: str = os.path.basename(path)
         sub_items: List[DirectoryNode] = list()
-        for entry in os.listdir(path):
+        for entry in sorted(os.listdir(path)):
             entry_path: str = os.path.join(path, entry)
             item: Union[DirectoryNode, None] = self.__get_directory_tree_recursively(entry_path)
-            if (item):
+            if item:
                 sub_items.append(item)
-        
+
         return DirectoryNode(directory_name, path, False, sub_items)
 
     def __load_directory_tree(self) -> None:
-        if (not self.__root_node):
+        if not self.__root_node:
             self.__root_node = self.__get_directory_tree_recursively(self.__root_dir)
 
     def __walk_recursively(self, node: DirectoryNode) -> None:
-        if (node.is_file):
+        if node.is_file:
             self.__node_visitor(node)
-
             return
-        
+
         for sub_node in (node.sub_items or []):
             self.__walk_recursively(sub_node)
 
@@ -84,7 +137,7 @@ class DirectoryWalker:
         self.__load_directory_tree()
         self.__node_visitor = visitor
 
-        if (self.__root_node):
+        if self.__root_node:
             self.__walk_recursively(self.__root_node)
 
 
@@ -98,7 +151,6 @@ class ExportWriter:
 
         try:
             start_index: int = path.parts.index(root_dir_name)
-
         except ValueError:
             return absolute_path
 
@@ -109,12 +161,11 @@ class ExportWriter:
 
     @classmethod
     def __get_formatted_block(cls, root_dir_name: str, filepath: str) -> Union[str, None]:
-        if (not os.path.isfile(filepath)):
+        if not os.path.isfile(filepath):
             return None
-        
-        try:
-            content: str = Path(filepath).read_text(encoding = DEFAULT__ENCODING)
 
+        try:
+            content: str = Path(filepath).read_text(encoding=DEFAULT__ENCODING)
         except Exception:
             return None
 
@@ -130,65 +181,96 @@ class ExportWriter:
         )
 
     @classmethod
-    def append_formatted_data_to_file(cls, output_file: str, root_dir_name: str, filepath: str) -> None:
-        formatted_content: Union[str, None] = cls.__get_formatted_block(root_dir_name, filepath) 
-        if (not formatted_content):
+    def append_formatted_data_to_file(
+        cls, output_file: str, root_dir_name: str, filepath: str
+    ) -> None:
+        formatted_content: Union[str, None] = cls.__get_formatted_block(root_dir_name, filepath)
+        if not formatted_content:
             return
-        
-        with open(output_file, "at", encoding = DEFAULT__ENCODING) as file:
+
+        with open(output_file, "at", encoding=DEFAULT__ENCODING) as file:
             file.write(formatted_content)
-    
-    
+
+
 class ProjectSourceExporter:
 
     def __init__(self, root_dir: str, output_file: str) -> None:
         self.__root_dir: str = root_dir
         self.__output_file: str = output_file
+        self.__resolved_output_file: Path = Path(output_file).resolve()
         self.__allowed_extensions: Union[List[str], None] = None
         self.__exclude_extensions: Union[List[str], None] = None
         self.__exclude_files: Union[List[str], None] = None
         self.__exclude_folders: Union[List[str], None] = None
+        self.__ignore_matcher: Optional[IgnoreRuleMatcher] = None
 
-        self.__directory_walker: DirectoryWalker = DirectoryWalker(self.__root_dir, self.__is_file_valid, self.__is_dir_valid)
+    def __to_relative_posix_path(self, path: str) -> str:
+        rel_path: str = os.path.relpath(path, self.__root_dir)
+        return Path(rel_path).as_posix()
 
     def __is_dir_valid(self, path: str) -> bool:
-        if (path == self.__root_dir):
+        if path == self.__root_dir:
             return True
 
-        if (not self.__exclude_folders):
-            return True
-            
-        return os.path.basename(path) not in self.__exclude_folders
+        if self.__exclude_folders and os.path.basename(path) in self.__exclude_folders:
+            return False
+
+        if self.__ignore_matcher:
+            rel_path: str = self.__to_relative_posix_path(path)
+            if self.__ignore_matcher.is_ignored(rel_path, is_dir=True):
+                return False
+
+        return True
 
     def __is_file_valid(self, path: str) -> bool:
+        if Path(path).resolve() == self.__resolved_output_file:
+            return False
+
         file_name: str = os.path.basename(path)
 
-        if (self.__exclude_files and file_name in self.__exclude_files):
+        if self.__exclude_files and file_name in self.__exclude_files:
             return False
 
-        if (self.__exclude_extensions and any(path.endswith(ext) for ext in self.__exclude_extensions)):
+        if self.__exclude_extensions and any(
+            path.endswith(ext) for ext in self.__exclude_extensions
+        ):
             return False
 
-        if (not self.__allowed_extensions):
+        if self.__ignore_matcher:
+            rel_path: str = self.__to_relative_posix_path(path)
+            if self.__ignore_matcher.is_ignored(rel_path, is_dir=False):
+                return False
+
+        if not self.__allowed_extensions:
             return True
 
         return any(path.endswith(extension) for extension in self.__allowed_extensions)
 
     def __handle_node(self, node: DirectoryNode) -> None:
-        if (node.is_file):
-            ExportWriter.append_formatted_data_to_file(self.__output_file, self.__root_dir, node.path)
+        if node.is_file:
+            ExportWriter.append_formatted_data_to_file(
+                self.__output_file, self.__root_dir, node.path
+            )
 
-    def run(self, 
-            allowed_extensions: Optional[List[str]] = None,
-            exclude_extensions: Optional[List[str]] = None,
-            exclude_files: Optional[List[str]] = None,
-            exclude_folders: Optional[List[str]] = None) -> None:
-            
+    def run(
+        self,
+        allowed_extensions: Optional[List[str]] = None,
+        exclude_extensions: Optional[List[str]] = None,
+        exclude_files: Optional[List[str]] = None,
+        exclude_folders: Optional[List[str]] = None,
+        exclude_from_file: Optional[Union[str, Path]] = None,
+    ) -> None:
         self.__allowed_extensions = allowed_extensions
         self.__exclude_extensions = exclude_extensions
         self.__exclude_files = exclude_files
         self.__exclude_folders = exclude_folders
+        self.__ignore_matcher = (
+            IgnoreRuleMatcher.from_file(exclude_from_file) if exclude_from_file else None
+        )
 
-        open(self.__output_file, "w", encoding = DEFAULT__ENCODING).close()
+        open(self.__output_file, "w", encoding=DEFAULT__ENCODING).close()
 
-        self.__directory_walker.walk(self.__handle_node)
+        directory_walker: DirectoryWalker = DirectoryWalker(
+            self.__root_dir, self.__is_file_valid, self.__is_dir_valid
+        )
+        directory_walker.walk(self.__handle_node)

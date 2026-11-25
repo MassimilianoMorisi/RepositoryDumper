@@ -11,8 +11,9 @@ It recursively scans a project directory and writes all source files into one ou
 - Recursive directory traversal
 - File filtering by allowed extensions
 - Exclusion of specific extensions, files, and folders
+- `.gitignore`-style exclusion file support (with automatic `.git/` exclusion for `.gitignore`)
 - Structured snapshot output format
-- Lightweight CLI tool (no dependencies)
+- Lightweight CLI tool
 - Stable formatting for programmatic parsing and LLM usage
 
 ---
@@ -24,14 +25,12 @@ Clone the repository:
 ```bash
 git clone https://github.com/MassimilianoMorisi/RepositoryDumper.git
 cd RepositoryDumper
-
 ```
 
 Install in editable mode:
 
 ```bash
 pip install -e .
-
 ```
 
 ---
@@ -42,28 +41,36 @@ Basic usage:
 
 ```bash
 repo-dump -r .
-
 ```
 
 Specify output file:
 
 ```bash
 repo-dump -r . -o snapshot.txt
-
 ```
 
 Filter by allowed file extensions:
 
 ```bash
 repo-dump -r . -e .py .js .ts
-
 ```
 
 Exclude specific extensions, folders, and files:
 
 ```bash
 repo-dump -r . --exclude_extensions .pyc .md --exclude_folders .git node_modules --exclude_files secrets.json
+```
 
+Exclude paths using a `.gitignore` file (automatically excludes `.git/` as well):
+
+```bash
+repo-dump -r . --exclude-from-file .gitignore
+```
+
+Exclude paths using a custom ignore file combined with extension filters:
+
+```bash
+repo-dump -r . -e .py .toml --exclude-from-file .dumpignore -o snapshot.txt
 ```
 
 ---
@@ -72,7 +79,7 @@ repo-dump -r . --exclude_extensions .pyc .md --exclude_folders .git node_modules
 
 Each file is written in the following structured format:
 
-```
+```text
 --------------------------------------------------------------------------------
 
 ==================================================
@@ -81,7 +88,6 @@ path/to/file.py
 
 <file content>
 --------------------------------------------------------------------------------
-
 ```
 
 * The outer dashed line separates files
@@ -105,6 +111,5 @@ path/to/file.py
 * Files are read using UTF-8 encoding
 * Binary or unreadable files are skipped safely
 * Directory traversal is recursive and deterministic
+* `.gitignore`-style ignore files support comments (`#`), blank lines, globs, directory patterns, root-anchored paths, and negation (`!`)
 * Output is appended in a structured sequential format
-
----

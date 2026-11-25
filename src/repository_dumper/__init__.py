@@ -4,6 +4,7 @@ from repository_dumper.core import (
     DirectoryNode,
     DirectoryWalker,
     ExportWriter,
+    IgnoreRuleMatcher,
     ProjectSourceExporter,
 )
 
@@ -17,5 +18,6 @@ __all__ = [
     "DirectoryNode",
     "DirectoryWalker",
     "ExportWriter",
+    "IgnoreRuleMatcher",
     "ProjectSourceExporter",
 ]
