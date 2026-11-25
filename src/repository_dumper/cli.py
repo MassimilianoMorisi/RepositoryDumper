@@ -47,7 +47,7 @@ def main() -> None:
         type=str,
         nargs="+",
         required=False,
-        help="Allowed file extension (e.g. .py, .java, ...)",
+        help="Allowed file extensions without leading dots (e.g. py java; leading dots also accepted)",
     )
 
     args_parser.add_argument(
@@ -57,7 +57,7 @@ def main() -> None:
         type=str,
         nargs="+",
         required=False,
-        help="File extensions to exclude (e.g. .pyc, .md)",
+        help="File extensions to exclude without leading dots (e.g. pyc md; leading dots also accepted)",
     )
 
     args_parser.add_argument(

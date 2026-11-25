@@ -4,7 +4,7 @@ RepositoryDumper core engine
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Protocol, Sequence, Union
+from typing import List, Optional, Protocol, Sequence, Set, Union
 import os
 
 from pathspec import GitIgnoreSpec
@@ -198,11 +198,36 @@ class ProjectSourceExporter:
         self.__root_dir: str = root_dir
         self.__output_file: str = output_file
         self.__resolved_output_file: Path = Path(output_file).resolve()
-        self.__allowed_extensions: Union[List[str], None] = None
-        self.__exclude_extensions: Union[List[str], None] = None
+        self.__allowed_extensions: Optional[Set[str]] = None
+        self.__exclude_extensions: Optional[Set[str]] = None
         self.__exclude_files: Union[List[str], None] = None
         self.__exclude_folders: Union[List[str], None] = None
         self.__ignore_matcher: Optional[IgnoreRuleMatcher] = None
+
+    @staticmethod
+    def __normalize_extensions(extensions: Optional[Sequence[str]]) -> Optional[Set[str]]:
+        if not extensions:
+            return None
+
+        normalized: Set[str] = set()
+        for ext in extensions:
+            cleaned: str = ext.strip().lstrip(".").lower()
+            if cleaned:
+                normalized.add(f".{cleaned}")
+
+        return normalized
+
+    @staticmethod
+    def __matches_extension(path: str, normalized_extensions: Set[str]) -> bool:
+        suffixes: List[str] = [suffix.lower() for suffix in Path(path).suffixes]
+        if not suffixes:
+            return False
+
+        for index in range(len(suffixes)):
+            if "".join(suffixes[index:]) in normalized_extensions:
+                return True
+
+        return False
 
     def __to_relative_posix_path(self, path: str) -> str:
         rel_path: str = os.path.relpath(path, self.__root_dir)
@@ -231,8 +256,8 @@ class ProjectSourceExporter:
         if self.__exclude_files and file_name in self.__exclude_files:
             return False
 
-        if self.__exclude_extensions and any(
-            path.endswith(ext) for ext in self.__exclude_extensions
+        if self.__exclude_extensions and self.__matches_extension(
+            path, self.__exclude_extensions
         ):
             return False
 
@@ -241,10 +266,10 @@ class ProjectSourceExporter:
             if self.__ignore_matcher.is_ignored(rel_path, is_dir=False):
                 return False
 
-        if not self.__allowed_extensions:
+        if self.__allowed_extensions is None:
             return True
 
-        return any(path.endswith(extension) for extension in self.__allowed_extensions)
+        return self.__matches_extension(path, self.__allowed_extensions)
 
     def __handle_node(self, node: DirectoryNode) -> None:
         if node.is_file:
@@ -254,14 +279,20 @@ class ProjectSourceExporter:
 
     def run(
         self,
-        allowed_extensions: Optional[List[str]] = None,
-        exclude_extensions: Optional[List[str]] = None,
+        allowed_extensions: Optional[Sequence[str]] = None,
+        exclude_extensions: Optional[Sequence[str]] = None,
         exclude_files: Optional[List[str]] = None,
         exclude_folders: Optional[List[str]] = None,
         exclude_from_file: Optional[Union[str, Path]] = None,
     ) -> None:
-        self.__allowed_extensions = allowed_extensions
-        self.__exclude_extensions = exclude_extensions
+        """Scan the root directory and write matching files to the output file.
+
+        `allowed_extensions` and `exclude_extensions` are case-insensitive and
+        accept dotless values (e.g., `["py", "java"]`) as well as dot-prefixed
+        values (e.g., `[".py", ".java"]`) and compound extensions (e.g., `"d.ts"`).
+        """
+        self.__allowed_extensions = self.__normalize_extensions(allowed_extensions)
+        self.__exclude_extensions = self.__normalize_extensions(exclude_extensions)
         self.__exclude_files = exclude_files
         self.__exclude_folders = exclude_folders
         self.__ignore_matcher = (

@@ -23,7 +23,7 @@ It recursively scans a project directory and writes all source files into one ou
 Clone the repository:
 
 ```bash
-git clone https://github.com/MassimilianoMorisi/RepositoryDumper.git
+git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
 cd RepositoryDumper
 ```
 
@@ -52,13 +52,13 @@ repo-dump -r . -o snapshot.txt
 Filter by allowed file extensions:
 
 ```bash
-repo-dump -r . -e .py .js .ts
+repo-dump -r . -e py js ts
 ```
 
 Exclude specific extensions, folders, and files:
 
 ```bash
-repo-dump -r . --exclude_extensions .pyc .md --exclude_folders .git node_modules --exclude_files secrets.json
+repo-dump -r . --exclude_extensions pyc md --exclude_folders .git node_modules --exclude_files secrets.json
 ```
 
 Exclude paths using a `.gitignore` file (automatically excludes `.git/` as well):
@@ -70,7 +70,7 @@ repo-dump -r . --exclude-from-file .gitignore
 Exclude paths using a custom ignore file combined with extension filters:
 
 ```bash
-repo-dump -r . -e .py .toml --exclude-from-file .dumpignore -o snapshot.txt
+repo-dump -r . -e py toml --exclude-from-file .dumpignore -o snapshot.txt
 ```
 
 ---
@@ -111,5 +111,6 @@ path/to/file.py
 * Files are read using UTF-8 encoding
 * Binary or unreadable files are skipped safely
 * Directory traversal is recursive and deterministic
+* Extension filters (`-e`, `--exclude_extensions`) are case-insensitive and accept dotless extensions (e.g., `py java`) as well as dot-prefixed ones (e.g., `.py .java`)
 * `.gitignore`-style ignore files support comments (`#`), blank lines, globs, directory patterns, root-anchored paths, and negation (`!`)
 * Output is appended in a structured sequential format

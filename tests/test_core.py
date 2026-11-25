@@ -15,12 +15,75 @@ def test_exporter_writes_allowed_files(tmp_path: Path) -> None:
     output_file = tmp_path / "snapshot.txt"
 
     exporter = ProjectSourceExporter(str(tmp_path), str(output_file))
-    exporter.run(allowed_extensions=[".py"])
+    exporter.run(allowed_extensions=["py"])
 
     result = output_file.read_text(encoding="utf-8")
     assert "hello.py" in result
     assert "print('hello')" in result
     assert "notes.md" not in result
+
+
+def test_extensions_normalization_and_backward_compatibility(tmp_path: Path) -> None:
+    (tmp_path / "Main.JAVA").write_text("class Main {}\n", encoding="utf-8")
+    (tmp_path / "script.py").write_text("x = 1\n", encoding="utf-8")
+    (tmp_path / "index.ts").write_text("export const a = 1;\n", encoding="utf-8")
+    (tmp_path / "README.MD").write_text("# Docs\n", encoding="utf-8")
+    (tmp_path / "skip.pyc").write_text("bytecode\n", encoding="utf-8")
+
+    output_file = tmp_path / "snapshot.txt"
+    exporter = ProjectSourceExporter(str(tmp_path), str(output_file))
+    exporter.run(
+        allowed_extensions=[" JAVA ", ".py", "..TS", "md"],
+        exclude_extensions=[".MD", " pyc "],
+    )
+
+    result = output_file.read_text(encoding="utf-8")
+    assert "class Main {}" in result
+    assert "x = 1" in result
+    assert "export const a = 1;" in result
+    assert "# Docs" not in result
+    assert "bytecode" not in result
+
+
+def test_extension_matching_edge_cases(tmp_path: Path) -> None:
+    (tmp_path / "app.py").write_text("py-content\n", encoding="utf-8")
+    (tmp_path / "mypy").write_text("no-ext-mypy\n", encoding="utf-8")
+    (tmp_path / "py").write_text("no-ext-py\n", encoding="utf-8")
+    (tmp_path / ".gitignore").write_text("dotfile-gitignore\n", encoding="utf-8")
+    (tmp_path / ".py").write_text("dotfile-py\n", encoding="utf-8")
+    (tmp_path / ".env.local").write_text("dotfile-with-ext\n", encoding="utf-8")
+    (tmp_path / "app.ts").write_text("plain-ts\n", encoding="utf-8")
+    (tmp_path / "types.d.ts").write_text("decl-ts\n", encoding="utf-8")
+    (tmp_path / "archive.tar.gz").write_text("tar-gz-content\n", encoding="utf-8")
+
+    output_file = tmp_path / "snapshot.txt"
+    exporter = ProjectSourceExporter(str(tmp_path), str(output_file))
+    exporter.run(
+        allowed_extensions=["py", "gitignore", "local", "ts", "tar.gz"],
+        exclude_extensions=["d.ts"],
+    )
+
+    result = output_file.read_text(encoding="utf-8")
+    assert "py-content" in result
+    assert "dotfile-with-ext" in result
+    assert "plain-ts" in result
+    assert "tar-gz-content" in result
+
+    assert "no-ext-mypy" not in result
+    assert "no-ext-py" not in result
+    assert "dotfile-gitignore" not in result
+    assert "dotfile-py" not in result
+    assert "decl-ts" not in result
+
+
+def test_invalid_dot_only_allowed_extensions_matches_nothing(tmp_path: Path) -> None:
+    (tmp_path / "hello.py").write_text("print('hello')\n", encoding="utf-8")
+
+    output_file = tmp_path / "snapshot.txt"
+    exporter = ProjectSourceExporter(str(tmp_path), str(output_file))
+    exporter.run(allowed_extensions=[".", "   "])
+
+    assert output_file.read_text(encoding="utf-8") == ""
 
 
 def test_exclude_from_gitignore_rules_and_auto_git_exclusion(tmp_path: Path) -> None:
@@ -105,7 +168,7 @@ def test_exclude_from_file_combines_with_existing_filters(tmp_path: Path) -> Non
     output_file = tmp_path / "snapshot.txt"
     exporter = ProjectSourceExporter(str(tmp_path), str(output_file))
     exporter.run(
-        allowed_extensions=[".py"],
+        allowed_extensions=["py"],
         exclude_files=["skip_by_flag.py"],
         exclude_from_file=ignore_file,
     )
