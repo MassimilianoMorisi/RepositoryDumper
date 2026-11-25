@@ -20,18 +20,93 @@ It recursively scans a project directory and writes all source files into one ou
 
 ## Installation
 
-Clone the repository:
+`RepositoryDumper` is best installed in an isolated environment using **`pipx`** or **`uv`**. This makes `repo-dump` available globally from any directory and avoids system Python conflicts (such as PEP 668 `externally-managed-environment` errors on Linux and macOS).
+
+**Prerequisites:** Python 3.10+ and Git.
+
+### Option 1: Install with `pipx` (Recommended)
+
+1. Install `pipx` if you don't already have it:
+
+   * **Debian / Ubuntu / Mint:**
+     ```bash
+     sudo apt update && sudo apt install -y pipx
+     pipx ensurepath
+     ```
+   * **Fedora / RHEL:**
+     ```bash
+     sudo dnf install -y pipx
+     pipx ensurepath
+     ```
+   * **Arch / Manjaro / Garuda:**
+     ```bash
+     sudo pacman -S python-pipx
+     pipx ensurepath
+     ```
+   * **macOS (Homebrew):**
+     ```bash
+     brew install pipx
+     pipx ensurepath
+     ```
+   * **Windows (PowerShell):**
+     ```powershell
+     py -m pip install --user pipx
+     py -m pipx ensurepath
+     ```
+
+   *(Restart your terminal after running `pipx ensurepath` so your `PATH` updates.)*
+
+2. Install `repo-dump` directly from GitHub:
+
+   ```bash
+   pipx install git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+   ```
+
+### Option 2: Install with `uv`
+
+If you use [uv](https://docs.astral.sh/uv/) (which can also manage Python 3.10+ automatically):
 
 ```bash
-git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
-cd RepositoryDumper
+uv tool install git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
 ```
 
-Install in editable mode:
+Or run `repo-dump` once without installing it permanently:
 
 ```bash
-pip install -e .
+uvx --from git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git) repo-dump
 ```
+
+### Verify Installation
+
+```bash
+repo-dump --help
+```
+
+---
+
+## Upgrading
+
+* **With `pipx`:**
+  ```bash
+  pipx install --force git+[https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+  ```
+* **With `uv`:**
+  ```bash
+  uv tool upgrade repository-dumper
+  ```
+
+---
+
+## Uninstallation
+
+* **With `pipx`:**
+  ```bash
+  pipx uninstall repository-dumper
+  ```
+* **With `uv`:**
+  ```bash
+  uv tool uninstall repository-dumper
+  ```
 
 ---
 
@@ -109,6 +184,31 @@ path/to/file.py
 * Lightweight project backups
 * Repository inspection and auditing
 * Generating static representations of codebases
+
+---
+
+## Development
+
+To contribute or run the test suite locally, clone the repository into an isolated virtual environment:
+
+```bash
+git clone [https://github.com/MassimilianoMorisi/RepositoryDumper.git](https://github.com/MassimilianoMorisi/RepositoryDumper.git)
+cd RepositoryDumper
+python -m venv .venv
+```
+
+Activate the virtual environment:
+
+* **Linux / macOS (Bash/Zsh):** `source .venv/bin/activate`
+* **Linux / macOS (Fish):** `source .venv/bin/activate.fish`
+* **Windows (PowerShell):** `.\.venv\Scripts\Activate.ps1`
+
+Install in editable mode with development dependencies and run tests:
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest
+```
 
 ---
 
