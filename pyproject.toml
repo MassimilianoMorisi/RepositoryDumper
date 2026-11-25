@@ -1,8 +1,45 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "repository-dumper"
 version = "0.1.0"
 description = "Export a repository into a single structured text snapshot"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+authors = [
+    { name = "Massimiliano Morisi" },
+]
+keywords = ["cli", "repository", "exporter", "snapshot", "llm"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Utilities",
+]
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/MassimilianoMorisi/RepositoryDumper"
+Issues = "https://github.com/MassimilianoMorisi/RepositoryDumper/issues"
 
 [project.scripts]
 repo-dump = "repository_dumper.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
