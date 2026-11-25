@@ -58,7 +58,7 @@ repo-dump -r . -e py js ts
 Exclude specific extensions, folders, and files:
 
 ```bash
-repo-dump -r . --exclude_extensions pyc md --exclude_folders .git node_modules --exclude_files secrets.json
+repo-dump -r . --exclude-extensions pyc md --exclude-folders .git node_modules --exclude-files secrets.json
 ```
 
 Exclude paths using a `.gitignore` file (automatically excludes `.git/` as well):
@@ -111,7 +111,7 @@ path/to/file.py
 * Files are read using UTF-8 encoding
 * Binary or unreadable files are skipped safely
 * Directory traversal is recursive and deterministic
-* When `-o` / `--output_file` is omitted, the dump is written to `<root_dir>/repo_dump.txt` and automatically excluded from being dumped into itself
-* Extension filters (`-e`, `--exclude_extensions`) are case-insensitive and accept dotless extensions (e.g., `py java`) as well as dot-prefixed ones (e.g., `.py .java`)
+* When `-o` / `--output-file` is omitted, the dump is written to `<root_dir>/repo_dump.txt` and automatically excluded from being dumped into itself
+* Extension filters (`-e` / `--allowed-extensions`, `--exclude-extensions`) are case-insensitive and accept dotless extensions (e.g., `py java`) as well as dot-prefixed ones (e.g., `.py .java`)
 * `.gitignore`-style ignore files support comments (`#`), blank lines, globs, directory patterns, root-anchored paths, and negation (`!`)
 * Output is appended in a structured sequential format

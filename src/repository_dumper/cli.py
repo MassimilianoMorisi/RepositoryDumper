@@ -1,10 +1,11 @@
+from typing import Optional, Sequence
 import argparse
 import sys
 
 from repository_dumper.core import DEFAULT_OUTPUT_FILENAME, ProjectSourceExporter
 
 
-def main() -> None:
+def build_parser() -> argparse.ArgumentParser:
     args_parser: argparse.ArgumentParser = argparse.ArgumentParser(
         description=(
             "Recursively scans a project directory, extracts all source files, "
@@ -15,7 +16,7 @@ def main() -> None:
 
     args_parser.add_argument(
         "-r",
-        "--root_dir",
+        "--root-dir",
         dest="root_dir",
         action="store",
         type=str,
@@ -25,7 +26,7 @@ def main() -> None:
 
     args_parser.add_argument(
         "-o",
-        "--output_file",
+        "--output-file",
         dest="output_file",
         action="store",
         type=str,
@@ -35,7 +36,7 @@ def main() -> None:
 
     args_parser.add_argument(
         "-e",
-        "--allowed_extensions",
+        "--allowed-extensions",
         dest="allowed_extensions",
         action="store",
         type=str,
@@ -45,7 +46,7 @@ def main() -> None:
     )
 
     args_parser.add_argument(
-        "--exclude_extensions",
+        "--exclude-extensions",
         dest="exclude_extensions",
         action="store",
         type=str,
@@ -55,7 +56,7 @@ def main() -> None:
     )
 
     args_parser.add_argument(
-        "--exclude_files",
+        "--exclude-files",
         dest="exclude_files",
         action="store",
         type=str,
@@ -65,7 +66,7 @@ def main() -> None:
     )
 
     args_parser.add_argument(
-        "--exclude_folders",
+        "--exclude-folders",
         dest="exclude_folders",
         action="store",
         type=str,
@@ -86,7 +87,12 @@ def main() -> None:
         ),
     )
 
-    args: argparse.Namespace = args_parser.parse_args()
+    return args_parser
+
+
+def main(argv: Optional[Sequence[str]] = None) -> None:
+    args_parser: argparse.ArgumentParser = build_parser()
+    args: argparse.Namespace = args_parser.parse_args(argv)
 
     project_source_exporter: ProjectSourceExporter = ProjectSourceExporter(
         args.root_dir, args.output_file
